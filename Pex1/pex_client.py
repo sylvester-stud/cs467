@@ -21,6 +21,15 @@ QUIT_CONNECTION = 3
 CONNECTION_CHECK = 4
 
 
+# Exception for bad name
+class Mp3NameError(Exception):
+    def __init__(self):
+        self.mess = "Bad mp3 Name"
+
+    def mess(self):
+        return self.mess
+
+
 def main():
     # Creates a new socket for IPv4 and receiving datagrams
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -37,27 +46,33 @@ def main():
         choice, song_name = get_input()
         if choice == LIST_OPTS:
             buffer_size = 4096
-            message = b'LIST_REQUEST'
+            message = b'List_REQUEST'
             try:
                 my_socket.sendto(message, (server_name, server_port))
                 (response, server_address) = my_socket.recvfrom(buffer_size)
             except OSError:
                 print("Socket receive timed out")
                 response = b"No response"
-            print("Server response: ", response.decode('UTF-8'))
+            print(response[11:-2].decode('UTF-8'))
         elif choice == PLAY_SONG:
             buffer_size = 4096
             iteration = 0
             song_req = "START_STREAM\n" + song_name
-            song_file = open("stream_" + song_name, "w+")
+            song_file = open("stream_" + song_name, "w+b")
             message = bytes(song_req, encoding='UTF-8')
             try:
                 my_socket.sendto(message, (server_name, server_port))
                 (packet, server_address) = my_socket.recvfrom(buffer_size)
+                if packet.decode('UTF-8') == "COMMAND_ERROR":
+                    raise Mp3NameError
             except OSError:
                 print("Socket stream timed out")
                 packet = bytes("COMMAND_ERROR", encoding='UTF-8')
+            except Mp3NameError:
+                print("The mp3 file name is invalid")
+                packet = bytes("COMMAND_ERROR", encoding='UTF-8')
             while packet.decode('UTF-8') != "STREAM_DONE" and packet.decode('UTF-8') != "COMMAND_ERROR":
+                print(packet.decode('UTF-8'))
                 iteration += 1
                 song_file.write(packet[12:])
                 try:
@@ -65,6 +80,7 @@ def main():
                     print("Packet #" + str(iteration) + "received successfully")
                 except OSError:
                     print("Socket stream timed out")
+                    packet = bytes("COMMAND_ERROR", encoding='UTF-8')
             song_file.close()
         elif choice == CONNECTION_CHECK:
             buffer_size = 1024
@@ -74,6 +90,8 @@ def main():
                 print("The server sent back", response.decode('UTF-8'))
             except OSError:
                 print("Timeout, probably no connection")
+        elif choice == QUIT_CONNECTION:
+            pass
         else:
             print("Invalid command")
 
