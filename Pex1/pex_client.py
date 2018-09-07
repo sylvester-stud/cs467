@@ -12,6 +12,8 @@
 # The socket library for creating and interacting
 # with the UDP socket
 import socket
+import os
+
 
 # Enumerate the possible selections for input
 BAD_CHOICE = 0
@@ -36,9 +38,9 @@ def main():
     my_socket.settimeout(5)
 
     # Set the server name and port
-    # server_name = '96.66.89.59'
-    server_name = '127.0.0.1'
-    server_port = 4242
+    server_name = '96.66.89.59'
+    # server_name = '127.0.0.1'
+    server_port = 4240
     choice = LIST_OPTS
     # Get the input while the user does not quit
     while choice != QUIT_CONNECTION:
@@ -46,7 +48,7 @@ def main():
         choice, song_name = get_input()
         if choice == LIST_OPTS:
             buffer_size = 4096
-            message = b'List_REQUEST'
+            message = b'LIST_REQUEST'
             try:
                 my_socket.sendto(message, (server_name, server_port))
                 (response, server_address) = my_socket.recvfrom(buffer_size)
@@ -63,7 +65,7 @@ def main():
             try:
                 my_socket.sendto(message, (server_name, server_port))
                 (packet, server_address) = my_socket.recvfrom(buffer_size)
-                if packet.decode('UTF-8') == "COMMAND_ERROR":
+                if packet == bytes("COMMAND_ERROR", encoding='UTF-8'):
                     raise Mp3NameError
             except OSError:
                 print("Socket stream timed out")
@@ -71,13 +73,14 @@ def main():
             except Mp3NameError:
                 print("The mp3 file name is invalid")
                 packet = bytes("COMMAND_ERROR", encoding='UTF-8')
-            while packet.decode('UTF-8') != "STREAM_DONE" and packet.decode('UTF-8') != "COMMAND_ERROR":
-                print(packet.decode('UTF-8'))
+                os.remove("stream_" + song_name)
+            while packet != bytes("STREAM_DONE", encoding='UTF-8') and\
+                    packet != bytes("COMMAND_ERROR", encoding='UTF-8'):
                 iteration += 1
                 song_file.write(packet[12:])
                 try:
                     (packet, server_address) = my_socket.recvfrom(buffer_size)
-                    print("Packet #" + str(iteration) + "received successfully")
+                    print("Packet " + str(iteration) + " received successfully")
                 except OSError:
                     print("Socket stream timed out")
                     packet = bytes("COMMAND_ERROR", encoding='UTF-8')
