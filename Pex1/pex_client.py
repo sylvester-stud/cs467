@@ -2,6 +2,7 @@
 # pex_client.py
 #
 # Author: Christian Sylvester, Aug 18
+# Documentation: None
 
 """
     A client for receiving media files (mp3) from  a
@@ -12,6 +13,7 @@
 # with the UDP socket
 import socket
 
+# Enumerate the possible selections for input
 BAD_CHOICE = 0
 LIST_OPTS = 1
 PLAY_SONG = 2
@@ -24,17 +26,15 @@ def main():
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.settimeout(5)
 
-    # Set the server name and port and send a request to the server
-    server_name = '96.66.89.59'
-    # server_name = '127.0.0.1'
+    # Set the server name and port
+    # server_name = '96.66.89.59'
+    server_name = '127.0.0.1'
     server_port = 4242
-    print("Connected to server.")
     choice = LIST_OPTS
     # Get the input while the user does not quit
     while choice != QUIT_CONNECTION:
+        # This gets the input from the user (song_name defaults to "")
         choice, song_name = get_input()
-        # Wait for the response from the server - this blocks until the server responds.
-        # The parameter is the maximum size of the receive buffer, in bytes.
         if choice == LIST_OPTS:
             buffer_size = 4096
             message = b'LIST_REQUEST'
@@ -71,7 +71,7 @@ def main():
             my_socket.sendto(b'BAD_COMM', (server_name, server_port))
             try:
                 (response, server_address) = my_socket.recvfrom(buffer_size)
-                print("The server sent back", response)
+                print("The server sent back", response.decode('UTF-8'))
             except OSError:
                 print("Timeout, probably no connection")
         else:
