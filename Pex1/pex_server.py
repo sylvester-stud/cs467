@@ -9,7 +9,6 @@
 """
 
 import socket
-import sys
 
 # Create a socket for communication.
 # The first socket is the module name. The second socket is a function call.
@@ -37,36 +36,37 @@ class Mp3Error(Exception):
 # Define the maximum size of message that will be accepted
 buffer_size = 4096
 
-# print(sys.argv[0])
-
-# Run the server 24/7 (24 hours a day, 7 days a week)
+# Continually run the server
 while True:
-    # Wait for a client to send the server a message.
-    # The parameter is the buffer size - the maximum number of bytes it can receive in one message
-    # The return values are the data buffer and the client's address: (host, port)
+    # Grabs the request from the client
     (data, client_address) = my_socket.recvfrom(buffer_size)
-    # print("Message: ", data)
+    # List the songs available (hard coded)
     if data.decode('UTF-8') == 'LIST_REQUEST':
-        message = bytes("LIST_REPLY\n" + SONG1+ "\n" + SONG2 + "\n\0", encoding='UTF-8')
+        message = bytes("LIST_REPLY\n" + SONG1 + "\n" + SONG2 + "\n\0", encoding='UTF-8')
         my_socket.sendto(message, client_address)
+    # Streams the data
+    # TODO: find if client or server bug in stream (hangs until timeout)
     elif data[0:12].decode == 'START_STREAM':
         try:
             if data[13:] != (SONG1 or SONG2):
                 raise Mp3Error
-            with open(data[13:].decode('UTF-8'), 'rb') as f:
+            with open(data[13:].decode('UTF-8'), 'rb') as f:  # Grabs the file and puts it into a binary string
                 binary_song = f.read()
-        except Mp3Error:
+        except Mp3Error:  # In the event a song name not in the options was entered
             my_socket.sendto(bytes(Mp3Error.err_mess, encoding='UTF-8'), client_address)
         i = 0
+        # Send Datagrams until the song is complete
         while i < len(binary_song):
             message = bytes("STREAM_DATA\n") + binary_song[i:i+32]
             my_socket.sendto(message, client_address)
+            i += 32
         message = b'STREAM_DONE'
         my_socket.sendto(message, client_address)
+    # Any other command should elicit and error response but not crash the program
     else:
         my_socket.sendto(bytes("COMMAND_ERROR", encoding='UTF-8'), client_address)
 
 
-# If the above loop was not infinite, the socket's resources should be reclaimed
+# Closes and deletes the socket if the loop is not infinite
 my_socket.close()
 del my_socket
