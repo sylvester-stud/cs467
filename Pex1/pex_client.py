@@ -12,7 +12,6 @@
 # The socket library for creating and interacting
 # with the UDP socket
 import socket
-import os
 
 
 # Enumerate the possible selections for input
@@ -26,10 +25,7 @@ CONNECTION_CHECK = 4
 # Exception for bad name
 class Mp3NameError(Exception):
     def __init__(self):
-        self.mess = "Bad mp3 Name"
-
-    def mess(self):
-        return self.mess
+        self.value = -20
 
 
 def main():
@@ -38,9 +34,9 @@ def main():
     my_socket.settimeout(5)
 
     # Set the server name and port
-    server_name = '96.66.89.59'
-    # server_name = '127.0.0.1'
-    server_port = 4240
+    # server_name = '96.66.89.59'
+    server_name = '127.0.0.1'
+    server_port = 4242
     choice = LIST_OPTS
     # Get the input while the user does not quit
     while choice != QUIT_CONNECTION:
@@ -73,7 +69,6 @@ def main():
             except Mp3NameError:
                 print("The mp3 file name is invalid")
                 packet = bytes("COMMAND_ERROR", encoding='UTF-8')
-                os.remove("stream_" + song_name)
             while packet != bytes("STREAM_DONE", encoding='UTF-8') and\
                     packet != bytes("COMMAND_ERROR", encoding='UTF-8'):
                 iteration += 1
