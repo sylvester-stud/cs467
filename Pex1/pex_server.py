@@ -1,16 +1,13 @@
 # pex_server.py
 #
 # Author: Christian Sylvester, Aug 18
+# Documentation: None
 
 """
-    A demonstration of a typical server using the UDP protocol. A server typically runs
-    24/7 and ony terminates when it is killed by an administrator. Thus the infinite
-    loop. The port number is arbitrary, but it should be greater than 1023. Ports 0-1023
-    are the reserved, "well known" ports.
+    This is the local server which will send the audio file names
+     and contents on demand to the client.
 """
 
-# The socket library allows for the creation and use of the TCP and UDP protocols.
-# See https://docs.python.org/3/library/socket.html
 import socket
 import sys
 
@@ -40,7 +37,7 @@ class Mp3Error(Exception):
 # Define the maximum size of message that will be accepted
 buffer_size = 4096
 
-print(sys.argv[0])
+# print(sys.argv[0])
 
 # Run the server 24/7 (24 hours a day, 7 days a week)
 while True:
@@ -67,7 +64,7 @@ while True:
         message = b'STREAM_DONE'
         my_socket.sendto(message, client_address)
     else:
-        my_socket.sendto(bytes("COMMAND_ERROR"), client_address)
+        my_socket.sendto(bytes("COMMAND_ERROR", encoding='UTF-8'), client_address)
 
 
 # If the above loop was not infinite, the socket's resources should be reclaimed
